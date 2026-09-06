@@ -28,3 +28,6 @@ home_card_t home_get_selected(void);
 
 // 最后浏览的身份卡(学生/开发者/活动),语音助手按此身份应答
 home_card_t home_get_identity(void);
+
+// 内存自测:打印 LVGL 池与系统堆剩余(用于排查身份卡首页内存余量)
+void home_mem_report(void);
