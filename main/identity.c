@@ -22,10 +22,9 @@ static const id_def_t IDS[ID_COUNT] = {
 
 static lv_obj_t *s_scr;
 static lv_obj_t *s_icon[ID_COUNT];
-static lv_obj_t *s_mark[ID_COUNT];   // "ACTIVE" 标记
+static lv_obj_t *s_mark[ID_COUNT];   // "ACTIVE" 标签容器(设底色)
+static lv_obj_t *s_mark_lab[ID_COUNT]; // "ACTIVE" 文字标签(设文字)
 static int s_sel;
-
-static lv_obj_t *flat(lv_obj_t *parent, int x, int y, int w, int h, uint32_t color);
 
 static void refresh_all(void)
 {
@@ -35,12 +34,11 @@ static void refresh_all(void)
         lv_obj_set_style_border_color(s_icon[i], lv_color_hex(sel ? 0xFFFFFF : UI_INK), 0);
         lv_obj_set_style_border_width(s_icon[i], sel ? 4 : 2, 0);
         if (cur == i) {
-            lv_obj_t *t = s_mark[i];
-            lv_obj_set_style_bg_color(t, lv_color_hex(0xF44336), 0);
-            lv_label_set_text(t, "ACTIVE");
+            lv_obj_set_style_bg_color(s_mark[i], lv_color_hex(0xF44336), 0);
+            lv_label_set_text(s_mark_lab[i], "ACTIVE");
         } else {
             lv_obj_set_style_bg_color(s_mark[i], lv_color_hex(UI_INK), 0);
-            lv_label_set_text(s_mark[i], "");
+            lv_label_set_text(s_mark_lab[i], "");
         }
     }
 }
@@ -80,6 +78,7 @@ static lv_obj_t *mk_icon(int i)
     lv_label_set_text(tl, "ACTIVE");
     lv_obj_center(tl);
     s_mark[i] = tag;
+    s_mark_lab[i] = tl;
 
     return card;
 }
