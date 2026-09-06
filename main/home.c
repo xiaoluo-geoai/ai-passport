@@ -40,7 +40,8 @@ static const card_def_t CARDS[N] = {
 static const uint8_t BAR_W[] = { 3, 2, 5, 2, 3, 4, 2, 6, 2, 3, 5, 2, 4, 3, 2, 6, 3, 2, 4, 2 };
 
 static lv_obj_t *s_scr;
-static lv_obj_t *s_film;
+static lv_obj_t *s_film;    // 裁切视口(202 高,超出部分不绘制)
+static lv_obj_t *s_strip;   // 内容条(5 卡总高),在视口内上下移动实现翻页
 static lv_obj_t *s_mascot;
 static lv_obj_t *s_dot[N];
 static int s_sel;
@@ -62,7 +63,7 @@ static lv_obj_t *flat(lv_obj_t *parent, int x, int y, int w, int h, uint32_t col
 static void build_card(int i)
 {
     const card_def_t *c = &CARDS[i];
-    lv_obj_t *card = ui_pixel_panel_create(s_film, CARD_X, i * PITCH, CARD_W, CARD_H, c->bg);
+    lv_obj_t *card = ui_pixel_panel_create(s_strip, CARD_X, i * PITCH, CARD_W, CARD_H, c->bg);
 
     lv_obj_t *header = ui_pixel_label(card, c->header, &lv_font_montserrat_14, UI_INK);
     lv_obj_align(header, LV_ALIGN_TOP_MID, 0, 0);
@@ -107,12 +108,12 @@ static void film_y_cb(void *obj, int32_t v)
 
 static void goto_card(void)
 {
-    lv_anim_delete(s_film, film_y_cb);
+    lv_anim_delete(s_strip, film_y_cb);
     lv_anim_t a;
     lv_anim_init(&a);
-    lv_anim_set_var(&a, s_film);
+    lv_anim_set_var(&a, s_strip);
     lv_anim_set_exec_cb(&a, film_y_cb);
-    lv_anim_set_values(&a, lv_obj_get_y(s_film), VIEW_Y - s_sel * PITCH);
+    lv_anim_set_values(&a, lv_obj_get_y(s_strip), -s_sel * PITCH);
     lv_anim_set_duration(&a, 200);
     lv_anim_set_path_cb(&a, lv_anim_path_ease_out);
     lv_anim_start(&a);
@@ -123,7 +124,7 @@ void home_init(void)
     s_sel = 0;
     s_scr = ui_pixel_screen_create("ID CARDS");
 
-    // 卡片胶片(裁切视口,只露出当前卡)
+    // 视口(202 高,LVGL 默认把子对象裁切在边界内,充当取景框)
     s_film = lv_obj_create(s_scr);
     lv_obj_remove_flag(s_film, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_pos(s_film, VIEW_X, VIEW_Y);
@@ -131,6 +132,15 @@ void home_init(void)
     lv_obj_set_style_bg_opa(s_film, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(s_film, 0, 0);
     lv_obj_set_style_pad_all(s_film, 0, 0);
+
+    // 内容条:装下全部 5 张卡,翻页就是移动它(被视口裁切)
+    s_strip = lv_obj_create(s_film);
+    lv_obj_remove_flag(s_strip, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_pos(s_strip, 0, 0);
+    lv_obj_set_size(s_strip, VIEW_W, N * PITCH);
+    lv_obj_set_style_bg_opa(s_strip, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(s_strip, 0, 0);
+    lv_obj_set_style_pad_all(s_strip, 0, 0);
 
     for (int i = 0; i < N; i++) build_card(i);
 
@@ -155,7 +165,7 @@ void home_init(void)
 void home_show(void)
 {
     refresh_dots();
-    lv_obj_set_y(s_film, VIEW_Y - s_sel * PITCH);
+    lv_obj_set_y(s_strip, -s_sel * PITCH);
     lv_screen_load(s_scr);
 }
 
