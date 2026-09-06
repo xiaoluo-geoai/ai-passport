@@ -5,6 +5,8 @@
 #include "home.h"
 #include "ui_pixel.h"
 #include "lvgl.h"
+#include "esp_log.h"
+#include "esp_system.h"   // esp_get_free_heap_size
 
 #define N        HOME_CARD_COUNT
 #define VIEW_X   14
@@ -147,6 +149,7 @@ void home_init(void)
 
     s_mascot = ui_pixel_mascot_create(s_scr, 4, 234);
     refresh_dots();
+    home_mem_report();   // 5 张卡建完立即报内存余量(验证 64KB 池够不够)
 }
 
 void home_show(void)
@@ -189,4 +192,16 @@ home_card_t home_get_selected(void)
 home_card_t home_get_identity(void)
 {
     return (home_card_t)s_identity;
+}
+
+// 内存自测:打印 LVGL 池与系统堆剩余(/lib/heap 接口),用于验证身份卡首页内存余量。
+void home_mem_report(void)
+{
+    lv_mem_monitor_t mon;
+    lv_mem_monitor(&mon);
+    ESP_LOGI("[home]",
+             "LVGL池: used=%u free=%u frag=%u%%, 系统堆剩余=%uB",
+             (unsigned)mon.total_size - (unsigned)mon.free_size,
+             (unsigned)mon.free_size, (unsigned)mon.frag_pct,
+             (unsigned)esp_get_free_heap_size());
 }
